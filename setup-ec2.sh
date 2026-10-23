@@ -12,6 +12,7 @@ if ! swapon --show | grep -q /swapfile; then
   sudo swapon /swapfile
 fi
 
+sudo rm -f /etc/apt/sources.list.d/jenkins.list /etc/apt/keyrings/jenkins-keyring.asc   # clear any stale Jenkins repo from an earlier failed run
 echo "== 2. Base packages, Docker, Java, Python, socat =="
 sudo apt-get update -y
 sudo apt-get install -y docker.io openjdk-17-jre-headless python3-venv python3-pip curl socat ca-certificates gnupg
