@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="page upload">
+  <header class="upload-header">
+    <h1>Automated Data Visualization Dashboard</h1>
+    <p>Upload a spreadsheet and get its key numbers and suitable charts on one page, without building any charts yourself.</p>
+  </header>
+
+  <form id="upload-form" class="upload-card" action="{{ url_for('process') }}" method="post"
+        enctype="multipart/form-data" novalidate>
+    <label for="file" class="field-label">Choose an Excel or CSV file</label>
+    <input id="file" name="file" type="file" accept=".xlsx,.xls,.csv">
+    <p class="hint">Maximum 25 MB. The first row must contain column headings. Supported types: .xlsx, .xls and .csv.</p>
+    <div id="error" class="error" role="alert"{% if not error %} hidden{% endif %}>{{ error }}</div>
+    <button id="process" type="submit" class="button primary">Process Data</button>
+  </form>
+
+  <p class="privacy">Your file is analysed on this computer only. Nothing is sent over the internet, and the original file is never changed.</p>
+</main>
+{% endblock %}

@@ -1,0 +1,11 @@
+.venv
+.git
+**/__pycache__
+**/.pytest_cache
+logs
+outputs
+docs
+tests
+browser_tests
+k8s
+Jenkinsfile

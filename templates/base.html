@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Data Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('plotly_js') }}" defer></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body data-process-url="{{ url_for('process') }}"
+      data-max-bytes="{{ config_max_bytes }}"
+      data-msg-no-file="{{ messages['E-07'] }}"
+      data-msg-too-large="{{ messages['E-02'] }}"
+      data-msg-unexpected="{{ messages['E-09'] }}">
+  <div id="app">{% block content %}{% endblock %}</div>
+  <div id="loading" class="loading" hidden role="status" aria-live="polite">
+    <div class="loading-box">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Processing your file&hellip;</p>
+    </div>
+  </div>
+</body>
+</html>

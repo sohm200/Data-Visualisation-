@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.file_name }} &ndash; Data Dashboard{% endblock %}
+{% block content %}
+<main class="page dashboard">
+
+  <header class="dash-header">
+    <div class="dash-title">
+      <h1>{{ profile.file_name }}</h1>
+      {% if profile.sheet_name %}
+      <div class="sheet">
+        <label for="sheet-select">Sheet</label>
+        {% if profile.sheet_names|length > 1 %}
+        <select id="sheet-select" name="sheet">
+          {% for name in profile.sheet_names %}
+          <option value="{{ name }}"{% if name == profile.sheet_name %} selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+        {% else %}
+        <span class="sheet-name">{{ profile.sheet_name }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    <a class="button" href="{{ url_for('upload_page') }}">Analyse another file</a>
+  </header>
+  <div id="error" class="error" role="alert" hidden></div>
+
+  <section class="cards" aria-label="Summary">
+    <div class="card">
+      <span class="card-label">Rows</span>
+      <span class="card-value">{{ profile.row_count|number }}</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Columns</span>
+      <span class="card-value">{{ profile.column_count|number }}</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Missing cells</span>
+      <span class="card-value">{{ profile.missing_cells|number }}</span>
+      <span class="card-sub">{{ '%.1f'|format(profile.missing_percent) }}% of all cells</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Number columns</span>
+      <span class="card-value">{{ profile.numeric_count }}</span>
+    </div>
+    {% if date_column %}
+    <div class="card card-wide">
+      <span class="card-label">Date range</span>
+      <span class="card-value card-value-small">{{ date_column.earliest|date }} &ndash; {{ date_column.latest|date }}</span>
+      <span class="card-sub">{{ date_column.name }}</span>
+    </div>
+    {% endif %}
+  </section>
+
+  {% if warnings %}
+  <section class="warnings" aria-labelledby="warnings-title">
+    <h2 id="warnings-title">Things to check</h2>
+    <ul>
+      {% for warning in warnings %}
+      <li>{{ warning.message }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <section aria-labelledby="charts-title">
+    <h2 id="charts-title">Charts</h2>
+    {% if charts %}
+    <div class="chart-grid">
+      {% for chart in charts %}
+      <figure class="chart-card">
+        <div class="chart" id="{{ chart.id }}" data-download-name="{{ chart.download_name }}"
+             role="img" aria-label="{{ chart.title }}"></div>
+        <script type="application/json" id="{{ chart.id }}-data">{{ chart.figure_json }}</script>
+        <figcaption>
+          {{ chart.caption }}
+          {% if chart.note %}<span class="note">{{ chart.note }}</span>{% endif %}
+        </figcaption>
+      </figure>
+      {% endfor %}
+    </div>
+    <details class="help">
+      <summary>How to read these charts</summary>
+      <ul>
+        {% for text in chart_help %}<li>{{ text }}</li>{% endfor %}
+      </ul>
+      <p>To save a chart as a PNG image, use the camera button in the chart's top-right corner.</p>
+    </details>
+    {% else %}
+    <p class="empty">No charts could be made for this data. See &ldquo;Things to check&rdquo; above.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="columns-title">
+    <h2 id="columns-title">Columns</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Column</th>
+            <th scope="col">Type</th>
+            <th scope="col" class="num">Missing</th>
+            <th scope="col" class="num">Unique values</th>
+            <th scope="col" class="num">Total</th>
+            <th scope="col" class="num">Average</th>
+            <th scope="col" class="num">Median</th>
+            <th scope="col" class="num">Smallest</th>
+            <th scope="col" class="num">Largest</th>
+            <th scope="col" class="num">Std. deviation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for column in profile.columns %}
+          <tr>
+            <th scope="row">{{ column.name }}</th>
+            <td><span class="type type-{{ column.type }}">{{ column.type_label }}</span></td>
+            <td class="num">{{ column.missing_count|number }} ({{ '%.1f'|format(column.missing_percent) }}%)</td>
+            <td class="num">{{ column.unique_count|number }}</td>
+            {% if column.type == 'numeric' %}
+            <td class="num">{{ column.total|number if column.total_meaningful else '—' }}</td>
+            <td class="num">{{ column.mean|number }}</td>
+            <td class="num">{{ column.median|number }}</td>
+            <td class="num">{{ column.minimum|number }}</td>
+            <td class="num">{{ column.maximum|number }}</td>
+            <td class="num">{{ column.std|number }}</td>
+            {% elif column.type == 'date' %}
+            <td class="num">—</td><td class="num">—</td><td class="num">—</td>
+            <td class="num">{{ column.earliest|date }}</td>
+            <td class="num">{{ column.latest|date }}</td>
+            <td class="num">—</td>
+            {% else %}
+            <td class="num">—</td><td class="num">—</td><td class="num">—</td>
+            <td class="num">—</td><td class="num">—</td><td class="num">—</td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">Totals are left out for IDs, years, percentages, rates, ratios, averages and ages, where adding values up has no meaning. ID columns are listed here but never averaged or charted.</p>
+  </section>
+
+  <section aria-labelledby="preview-title">
+    <h2 id="preview-title">Data preview</h2>
+    <p class="table-note">The first {{ profile.preview_rows|length }} rows, as they appear in the file.</p>
+    <div class="table-wrap">
+      <table class="data-table preview">
+        <thead>
+          <tr>
+            {% for name in profile.preview_columns %}<th scope="col">{{ name }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in profile.preview_rows %}
+          <tr>
+            {% for value in row %}<td>{{ value }}</td>{% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+{% endblock %}

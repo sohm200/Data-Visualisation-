@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: IMAGE_PLACEHOLDER   # Jenkins replaces this with <dockerhub-user>/dashboard:<build-number>
+          ports:
+            - containerPort: 5000
